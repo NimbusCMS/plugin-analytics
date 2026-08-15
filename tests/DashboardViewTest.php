@@ -37,13 +37,16 @@ final class DashboardViewTest extends TestCase
 
     public function test_empty_data_reads_gracefully(): void
     {
-        $html = (new DashboardView())->html(0, [], [], []);
+        // The window is always filled day by day, so the chart still draws (as
+        // zero-bars); the tables report that there is nothing yet.
+        $html = (new DashboardView(7))->html(0, [], [], []);
 
+        self::assertStringContainsString('<svg', $html);
+        self::assertSame(7, substr_count($html, '<rect'), 'one zero-bar per day in the window');
         self::assertStringContainsString('Nothing yet', $html);
-        self::assertStringContainsString('No pageviews', $html);
     }
 
-    public function test_the_chart_draws_one_bar_per_day(): void
+    public function test_the_chart_draws_one_bar_per_point(): void
     {
         $svg = BarChart::render([
             ['label' => '2026-08-14', 'value' => 3],
@@ -52,5 +55,10 @@ final class DashboardViewTest extends TestCase
 
         self::assertStringContainsString('<svg', $svg);
         self::assertSame(2, substr_count($svg, '<rect'));
+    }
+
+    public function test_a_truly_empty_series_shows_a_message(): void
+    {
+        self::assertStringContainsString('No pageviews', BarChart::render([]));
     }
 }
