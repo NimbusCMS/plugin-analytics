@@ -29,7 +29,7 @@ final class Dashboard
     public function render(): string
     {
         $storage = ($this->storage)();
-        $since   = date('Y-m-d 00:00:00', strtotime('-' . (self::DAYS - 1) . ' days') ?: time());
+        $since   = date('Y-m-d 00:00:00', (int) strtotime('-' . (self::DAYS - 1) . ' days'));
 
         $total = (int) ($storage->selectOne(
             'SELECT COUNT(*) AS c FROM ' . Schema::TABLE . ' WHERE occurred_at >= :s',
