@@ -53,6 +53,20 @@ final class AnalyticsPlugin implements Plugin
             static fn (Request $request): string => $dashboard->render(),
         );
 
+        // Retention: `nimbus prune` drops page views older than the window
+        // (ANALYTICS_RETENTION_DAYS, default 90; 0 keeps everything).
+        $context->maintenance()->register('prune-hits', static function () use ($storage): int {
+            $days = (int) (getenv('ANALYTICS_RETENTION_DAYS') ?: '90');
+            if ($days <= 0) {
+                return 0;
+            }
+
+            return $storage()->execute(
+                'DELETE FROM ' . Schema::TABLE . ' WHERE occurred_at < :cutoff',
+                ['cutoff' => date('Y-m-d H:i:s', (int) strtotime("-{$days} days"))],
+            );
+        });
+
         $agent = Agent::fromEnv();
         if ($agent !== null) {
             $context->head()->register(new AgentContributor($agent));

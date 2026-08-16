@@ -15,3 +15,5 @@ to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Third-party agent injection: a head contributor emits the snippet for a
   configured provider (Plausible, Fathom, or Google Analytics) from environment
   variables.
+- Retention: a `nimbus prune` maintenance task drops page views older than
+  `ANALYTICS_RETENTION_DAYS` (default 90; `0` keeps everything).

@@ -10,6 +10,7 @@ use Nimbus\Plugin\PluginCapabilities;
 use Nimbus\Plugin\PluginLoader;
 use Nimbus\Support\CoreEvents;
 use Nimbus\Support\EventDispatcher;
+use Nimbus\Support\MaintenanceRegistry;
 use NimbusCMS\Analytics\AnalyticsPlugin;
 use PHPUnit\Framework\TestCase;
 
@@ -69,17 +70,19 @@ final class PackageIntegrationTest extends TestCase
         self::assertSame('nimbuscms-plugin', $this->manifest()['type']);
     }
 
-    public function test_discovery_registers_the_migration_listener_and_admin_page(): void
+    public function test_discovery_registers_the_migration_listener_admin_page_and_retention(): void
     {
-        $migrations = new MigrationRegistry();
-        $events     = new EventDispatcher();
-        $adminPages = new AdminPageRegistry();
+        $migrations  = new MigrationRegistry();
+        $events      = new EventDispatcher();
+        $adminPages  = new AdminPageRegistry();
+        $maintenance = new MaintenanceRegistry();
 
         $loader      = new PluginLoader($this->installedAs());
         $diagnostics = $loader->load(new PluginCapabilities(
             migrations: $migrations,
             events: $events,
             adminPages: $adminPages,
+            maintenance: $maintenance,
         ));
 
         self::assertSame([], $diagnostics, 'a correctly installed package must load cleanly');
@@ -88,6 +91,7 @@ final class PackageIntegrationTest extends TestCase
         self::assertSame(['nimbuscms.analytics:001_hits'], array_column($migrations->all(), 'name'), 'its migration');
         self::assertTrue($events->hasListeners(CoreEvents::REQUEST_HANDLED), 'its page-view listener');
         self::assertSame(['analytics'], array_column($adminPages->all(), 'slug'), 'its admin page');
+        self::assertSame(['nimbuscms.analytics:prune-hits'], array_column($maintenance->all(), 'name'), 'its retention task');
     }
 
     public function test_disabling_the_package_registers_nothing(): void
